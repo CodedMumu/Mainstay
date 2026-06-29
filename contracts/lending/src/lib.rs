@@ -576,6 +576,11 @@ impl LendingContract {
             }
         }
 
+        // Prevent withdrawing to the contract itself, which would lock funds.
+        if voucher == env.current_contract_address() {
+            panic_with_error!(&env, ContractError::InvalidWithdrawDestination);
+        }
+
         let key = vouches_key(&borrower);
         let mut vouches: Vec<Vouch> = env
             .storage()

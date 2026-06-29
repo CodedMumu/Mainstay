@@ -135,6 +135,28 @@ fn test_withdraw_vouch_success() {
 }
 
 #[test]
+fn test_withdraw_vouch_to_contract_address_rejection() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let (contract_id, token_id, _admin, _token_admin) = setup_contract_and_token(&env);
+    let client = LendingContractClient::new(&env, &contract_id);
+    let stellar_asset_client = StellarAssetClient::new(&env, &token_id);
+
+    let borrower = Address::generate(&env);
+    let voucher = env.current_contract_address();
+
+    // Mint enough tokens to the contract so any transfer attempt can proceed.
+    stellar_asset_client.mint(&env.current_contract_address(), &1_000_000_000);
+
+    let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+        client.withdraw_vouch(&borrower, &voucher);
+    }));
+
+    assert!(result.is_err(), "Withdraw vouch to contract address should fail");
+}
+
+#[test]
 fn test_withdraw_vouch_with_active_loan_rejection() {
     let env = Env::default();
     env.mock_all_auths();
